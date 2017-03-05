@@ -2,33 +2,27 @@ package com.github.bogdanovmn.tlcache;
 
 import com.github.bogdanovmn.tlcache.exception.CreateCachedObjectError;
 import com.github.bogdanovmn.tlcache.exception.DeserializationError;
+import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
 
 public class TwoLvlCache implements Cache {
-	private final MemoryCache firstLvlCache;
-	private final FileCache secondLvlCache;
+	private final Cache firstLvlCache;
+	private final Cache secondLvlCache;
+	private final CacheRotateStrategy rotateStrategy;
 
-	public TwoLvlCache(int memoryCacheMaxSize, int fileCacheMaxSize) {
+	public TwoLvlCache(int memoryCacheMaxSize, int fileCacheMaxSize, CacheRotateStrategy strategy) {
 		this.firstLvlCache = new MemoryCache(memoryCacheMaxSize);
 		this.secondLvlCache = new FileCache(fileCacheMaxSize);
+		this.rotateStrategy = strategy;
 	}
 
 	@Override
 	public void put(String key, Object value)
 		throws CreateCachedObjectError
 	{
-		CachedObject cachedObject = new CachedObject(value);
-		this.delete(key);
-		if (this.firstLvlCache.availableSize() >= cachedObject.size()) {
-			this.firstLvlCache.put(key, cachedObject);
-		}
-		else {
-			if (this.secondLvlCache.availableSize() >= cachedObject.size()) {
-				this.secondLvlCache.put(key, cachedObject);
-			}
-			else {
+		ObjectInCache objectInCache = new ObjectInCache(key, value);
 
-			}
-		}
+		this.delete(key);
+		this.rotateStrategy.rotateAndPut(this.firstLvlCache, this.secondLvlCache, objectInCache);
 	}
 
 	@Override
@@ -37,20 +31,29 @@ public class TwoLvlCache implements Cache {
 	{
 		Object result = null;
 
-		CachedObject cachedObject = (CachedObject) this.firstLvlCache.get(key);
-		if (cachedObject == null) {
-			cachedObject = (CachedObject) this.secondLvlCache.get(key);
+		ObjectInCache objectInCache = (ObjectInCache) this.firstLvlCache.get(key);
+		if (objectInCache == null) {
+			objectInCache = (ObjectInCache) this.secondLvlCache.get(key);
 		}
 
-		if (cachedObject != null) {
-			result = cachedObject.fetch();
+		if (objectInCache != null) {
+			result = objectInCache.fetch();
 		}
 
 		return result;
 	}
 
 	@Override
-	public void delete(String key) {
+	public boolean delete(String key) {
+		boolean result = this.firstLvlCache.delete(key);
+		if (!result) {
+			result = this.secondLvlCache.delete(key);
+		}
+		return result;
+	}
 
+	@Override
+	public int getFreeSpace() {
+		return this.firstLvlCache.getFreeSpace() + this.secondLvlCache.getFreeSpace();
 	}
 }

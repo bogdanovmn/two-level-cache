@@ -5,10 +5,11 @@ import com.github.bogdanovmn.tlcache.exception.DeserializationError;
 
 import java.io.*;
 
-public class CachedObject {
+public class ObjectInCache {
+	private final String key;
 	private final byte[] data;
 
-	public CachedObject(Object value) throws CreateCachedObjectError {
+	public ObjectInCache(String key, Object value) throws CreateCachedObjectError {
 		try (
 			ByteArrayOutputStream bos = new ByteArrayOutputStream()
 		) {
@@ -16,6 +17,7 @@ public class CachedObject {
 			out.writeObject(value);
 			out.flush();
 			this.data = bos.toByteArray();
+			this.key = key;
 		}
 		catch (IOException e) {
 			throw new CreateCachedObjectError(e);
@@ -34,5 +36,14 @@ public class CachedObject {
 			throw new DeserializationError(e);
 		}
 		return result;
+	}
+
+
+	public String getKey() {
+		return this.key;
+	}
+
+	public int size() {
+		return this.data.length;
 	}
 }

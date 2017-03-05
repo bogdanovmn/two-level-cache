@@ -9,6 +9,7 @@ public interface Cache {
 
 	Object get(final String key) throws DeserializationError;
 
-	void delete(final String key);
+	boolean delete(final String key);
 
+	int getFreeSpace();
 }

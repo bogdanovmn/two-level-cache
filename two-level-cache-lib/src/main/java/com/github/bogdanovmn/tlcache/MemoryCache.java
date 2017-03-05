@@ -16,7 +16,12 @@ public class MemoryCache extends CacheWithMaxSizeLimit {
 	}
 
 	@Override
-	public void delete(String key) {
+	public boolean delete(String key) {
+		return false;
+	}
 
+	@Override
+	public int getFreeSpace() {
+		return 0;
 	}
 }
