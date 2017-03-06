@@ -5,8 +5,8 @@ import com.github.bogdanovmn.tlcache.exception.DeserializationError;
 import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
 
 public class TwoLvlCache implements Cache {
-	private final Cache firstLvlCache;
-	private final Cache secondLvlCache;
+	private final CacheWithMaxSizeLimit firstLvlCache;
+	private final CacheWithMaxSizeLimit secondLvlCache;
 	private final CacheRotateStrategy rotateStrategy;
 
 	public TwoLvlCache(int memoryCacheMaxSize, int fileCacheMaxSize, CacheRotateStrategy strategy) {
@@ -50,10 +50,5 @@ public class TwoLvlCache implements Cache {
 			result = this.secondLvlCache.delete(key);
 		}
 		return result;
-	}
-
-	@Override
-	public int getFreeSpace() {
-		return this.firstLvlCache.getFreeSpace() + this.secondLvlCache.getFreeSpace();
 	}
 }

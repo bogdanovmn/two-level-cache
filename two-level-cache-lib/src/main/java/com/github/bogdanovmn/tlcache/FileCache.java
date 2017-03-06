@@ -1,8 +1,15 @@
 package com.github.bogdanovmn.tlcache;
 
+import java.util.List;
+
 public class FileCache extends CacheWithMaxSizeLimit {
 	public FileCache(int maxSize) {
 		super(maxSize);
+	}
+
+	@Override
+	public List<ObjectInCache> releaseObjects(int size) {
+		return null;
 	}
 
 	@Override

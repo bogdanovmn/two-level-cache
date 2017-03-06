@@ -1,9 +1,16 @@
 package com.github.bogdanovmn.tlcache;
 
-abstract class CacheWithMaxSizeLimit implements Cache {
+import java.util.List;
+
+abstract public class CacheWithMaxSizeLimit implements Cache {
 	private final int maxSize;
 
 	public CacheWithMaxSizeLimit(int maxSize) {
 		this.maxSize = maxSize;
 	}
+
+	abstract public List<ObjectInCache> releaseObjects(int size);
+
+	abstract public int getFreeSpace();
+
 }
