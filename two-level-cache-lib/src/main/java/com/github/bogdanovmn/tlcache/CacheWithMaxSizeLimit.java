@@ -3,7 +3,7 @@ package com.github.bogdanovmn.tlcache;
 import java.util.List;
 
 abstract public class CacheWithMaxSizeLimit implements Cache {
-	private final int maxSize;
+	protected final int maxSize;
 
 	public CacheWithMaxSizeLimit(int maxSize) {
 		this.maxSize = maxSize;
