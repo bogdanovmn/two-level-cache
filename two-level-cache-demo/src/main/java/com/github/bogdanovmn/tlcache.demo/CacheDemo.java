@@ -2,12 +2,16 @@ package com.github.bogdanovmn.tlcache.demo;
 
 
 import com.github.bogdanovmn.tlcache.TwoLvlCache;
+import com.github.bogdanovmn.tlcache.exception.CreateCachedObjectError;
+import com.github.bogdanovmn.tlcache.exception.DeserializationError;
 import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
 import com.github.bogdanovmn.tlcache.strategy.TwoLevelCacheStrategyAlpha;
 import org.apache.commons.cli.*;
 
+import java.util.Random;
+
 public class CacheDemo {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws DeserializationError, CreateCachedObjectError {
 		Options cliOptions = new Options();
 		cliOptions
 			.addOption(
@@ -34,6 +38,14 @@ public class CacheDemo {
 					.desc("old objects rotate strategy")
 					.required()
 				.build()
+			)
+			.addOption(
+				Option.builder("t")
+					.longOpt("task-param")
+					.hasArg().argName("NUMBER")
+					.desc("some integer for abstract task (objects count)")
+					.required()
+					.build()
 			);
 
 		CommandLineParser cmdLineParser = new DefaultParser();
@@ -50,13 +62,16 @@ public class CacheDemo {
 					? new TwoLevelCacheStrategyAlpha()
 					: new TwoLevelCacheStrategyAlpha();
 
-				TwoLvlCache cache = new TwoLvlCache(
+				TwoLvlCache cache = new TwoLvlCache<Integer, Integer>(
 					Integer.valueOf(cmdLine.getOptionValue("first-level-limit")),
 					Integer.valueOf(cmdLine.getOptionValue("second-level-limit")),
 					strategy
 				);
 
-				doSomething(cache);
+				doSomething(
+					Integer.valueOf(cmdLine.getOptionValue("task-param")),
+					cache
+				);
 			}
 		}
 		catch (ParseException e) {
@@ -64,9 +79,35 @@ public class CacheDemo {
 			printHelp(cliOptions);
 		}
 	}
+	/**
+		Some complex compute... :)
+	 */
+	private static int complexCompute(int number) {
+		return number;
+	}
 
-	private static void doSomething(TwoLvlCache cache) {
+	private static void doSomething(int objectsCount, TwoLvlCache cache)
+		throws DeserializationError, CreateCachedObjectError
+	{
+		System.out.println(cache);
 
+		Random generator = new Random();
+		for (int i = 1; i < objectsCount; i++) {
+			int randValue = generator.nextInt(i);
+
+			System.out.printf("get %d --> ", randValue);
+
+			Integer obj = (Integer) cache.get(randValue);
+			if (obj == null) {
+				cache.put(randValue, complexCompute(randValue));
+				System.out.print(" compute  ");
+			}
+			else {
+				System.out.printf(" hit (%d)  ", obj);
+			}
+
+			System.out.println(cache);
+		}
 	}
 
 	private static void printHelp(Options opts) {

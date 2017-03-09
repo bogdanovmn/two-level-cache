@@ -18,7 +18,7 @@ public class TwoLevelCacheStrategyAlpha implements CacheRotateStrategy {
 			List<ObjectInCache> objects = firstLvl.releaseObjects(obj.size());
 			secondLvl.releaseObjects(obj.size());
 			for (ObjectInCache o : objects) {
-				secondLvl.put(obj.getKey(), o);
+				secondLvl.put(o.getKey(), o);
 			}
 			firstLvl.put(obj.getKey(), obj);
 		}
