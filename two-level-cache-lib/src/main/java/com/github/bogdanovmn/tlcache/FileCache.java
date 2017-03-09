@@ -2,7 +2,7 @@ package com.github.bogdanovmn.tlcache;
 
 import java.util.List;
 
-public class FileCache extends CacheWithMaxSizeLimit {
+public class FileCache<KeyType> extends CacheWithMaxSizeLimit<KeyType, ObjectInCache> {
 	public FileCache(int maxSize) {
 		super(maxSize);
 	}
@@ -13,22 +13,17 @@ public class FileCache extends CacheWithMaxSizeLimit {
 	}
 
 	@Override
-	public void put(String key, Object value) {
+	public void put(KeyType key, ObjectInCache value) {
 
 	}
 
 	@Override
-	public Object get(String key) {
+	public ObjectInCache get(KeyType key) {
 		return null;
 	}
 
 	@Override
-	public boolean delete(String key) {
+	public boolean delete(KeyType key) {
 		return false;
-	}
-
-	@Override
-	public int getFreeSpace() {
-		return 0;
 	}
 }

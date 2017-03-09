@@ -5,11 +5,13 @@ import com.github.bogdanovmn.tlcache.exception.DeserializationError;
 
 import java.io.*;
 
-public class ObjectInCache {
-	private final String key;
+public class ObjectInCache<KeyType, ObjType> {
+	private final KeyType key;
 	private final byte[] data;
 
-	public ObjectInCache(String key, Object value) throws CreateCachedObjectError {
+	public ObjectInCache(KeyType key, ObjType value)
+		throws CreateCachedObjectError
+	{
 		try (
 			ByteArrayOutputStream bos = new ByteArrayOutputStream()
 		) {
@@ -24,13 +26,13 @@ public class ObjectInCache {
 		}
 	}
 
-	public Object fetch() throws DeserializationError {
-		Object result;
+	public ObjType fetch() throws DeserializationError {
+		ObjType result;
 		try (
 			ByteArrayInputStream bis = new ByteArrayInputStream(this.data)
 		) {
 			ObjectInput in = new ObjectInputStream(bis);
-			result = in.readObject();
+			result = (ObjType) in.readObject();
 		}
 		catch (ClassNotFoundException | IOException e) {
 			throw new DeserializationError(e);
@@ -39,7 +41,7 @@ public class ObjectInCache {
 	}
 
 
-	public String getKey() {
+	public KeyType getKey() {
 		return this.key;
 	}
 
