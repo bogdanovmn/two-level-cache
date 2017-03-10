@@ -1,26 +1,31 @@
 package com.github.bogdanovmn.tlcache.strategy;
 
-import com.github.bogdanovmn.tlcache.CacheWithMaxSizeLimit;
-import com.github.bogdanovmn.tlcache.ObjectInCache;
-import com.github.bogdanovmn.tlcache.exception.CreateCachedObjectError;
+import com.github.bogdanovmn.tlcache.AbstractCacheWithSizeLimit;
+import com.github.bogdanovmn.tlcache.exception.SerializationError;
+import com.github.bogdanovmn.tlcache.exception.PutToCacheError;
 
 import java.util.List;
+import java.util.Map;
 
 public class TwoLevelCacheStrategyAlpha implements CacheRotateStrategy {
 	@Override
-	public void rotateAndPut(CacheWithMaxSizeLimit firstLvl, CacheWithMaxSizeLimit secondLvl, ObjectInCache obj)
-		throws CreateCachedObjectError
+	public void rotateAndPut(
+		AbstractCacheWithSizeLimit firstLvl,
+		AbstractCacheWithSizeLimit secondLvl,
+		Object key,
+		byte[] data
+	) throws SerializationError, PutToCacheError
 	{
-		if (firstLvl.getFreeSpace() >= obj.size()) {
-			firstLvl.put(obj.getKey(), obj);
+		if (firstLvl.getFreeSpace() >= data.length) {
+			firstLvl.put(key, data);
 		}
 		else {
-			List<ObjectInCache> objects = firstLvl.releaseObjects(obj.size());
-			secondLvl.releaseObjects(obj.size());
-			for (ObjectInCache o : objects) {
-				secondLvl.put(o.getKey(), o);
+			Map<Object, byte[]> objects = firstLvl.releaseObjects(data.length);
+			secondLvl.releaseObjects(data.length);
+			for (Map.Entry o : objects.entrySet()) {
+				secondLvl.put(o.getKey(), o.getValue());
 			}
-			firstLvl.put(obj.getKey(), obj);
+			firstLvl.put(key, data);
 		}
 	}
 }

@@ -2,16 +2,18 @@ package com.github.bogdanovmn.tlcache.demo;
 
 
 import com.github.bogdanovmn.tlcache.TwoLvlCache;
-import com.github.bogdanovmn.tlcache.exception.CreateCachedObjectError;
+import com.github.bogdanovmn.tlcache.exception.PutToCacheError;
+import com.github.bogdanovmn.tlcache.exception.SerializationError;
 import com.github.bogdanovmn.tlcache.exception.DeserializationError;
 import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
 import com.github.bogdanovmn.tlcache.strategy.TwoLevelCacheStrategyAlpha;
 import org.apache.commons.cli.*;
 
+import java.io.IOException;
 import java.util.Random;
 
 public class CacheDemo {
-	public static void main(String[] args) throws DeserializationError, CreateCachedObjectError {
+	public static void main(String[] args) throws DeserializationError, SerializationError, PutToCacheError, IOException {
 		Options cliOptions = new Options();
 		cliOptions
 			.addOption(
@@ -87,8 +89,7 @@ public class CacheDemo {
 	}
 
 	private static void doSomething(int objectsCount, TwoLvlCache cache)
-		throws DeserializationError, CreateCachedObjectError
-	{
+		throws DeserializationError, SerializationError, PutToCacheError {
 		System.out.println(cache);
 
 		Random generator = new Random();

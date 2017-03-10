@@ -2,28 +2,28 @@ package com.github.bogdanovmn.tlcache;
 
 import java.util.*;
 
-public class MemoryCache<KeyType> extends CacheWithMaxSizeLimit<KeyType, ObjectInCache> {
+class MemoryCache<KeyType> extends AbstractCacheWithSizeLimit<KeyType> {
 
-	public MemoryCache(int maxSize) {
+	MemoryCache(int maxSize) {
 		super(maxSize);
 	}
 
 	@Override
-	public List<ObjectInCache> releaseObjects(final int size) {
+	public Map<KeyType, byte[]> releaseObjects(final int size) {
 		int sizeToRelease = size - this.getFreeSpace();
 		if (sizeToRelease < 0) {
 			sizeToRelease = 0;
 		}
 
 		int releasedSize = 0;
-		List<ObjectInCache> releasedObjects = new ArrayList<>();
+		Map<KeyType, byte[]> releasedObjects = new HashMap<>();
 
 		Set<KeyType> keysToRemove = new HashSet<>();
-		for (Map.Entry<KeyType, ObjectInCache> entry : this.storage.entrySet()) {
+		for (Map.Entry<KeyType, Object> entry : this.storage.entrySet()) {
 			if (releasedSize < sizeToRelease) {
-				ObjectInCache obj = entry.getValue();
-				releasedSize += obj.size();
-				releasedObjects.add(obj);
+				byte[] data = (byte[]) entry.getValue();
+				releasedSize += data.length;
+				releasedObjects.put(entry.getKey(), data);
 				keysToRemove.add(entry.getKey());
 			}
 			else {
@@ -40,23 +40,23 @@ public class MemoryCache<KeyType> extends CacheWithMaxSizeLimit<KeyType, ObjectI
 	}
 
 	@Override
-	public void put(KeyType key, ObjectInCache obj) {
-		if (this.getFreeSpace() >= obj.size()) {
-			this.storage.put(key, obj);
-			this.currentSize += obj.size();
+	public void put(KeyType key, final byte[] data) {
+		if (this.getFreeSpace() >= data.length) {
+			this.storage.put(key, data);
+			this.currentSize += data.length;
 		}
 	}
 
 	@Override
-	public ObjectInCache get(KeyType key) {
-		return this.storage.get(key);
+	public byte[] get(KeyType key) {
+		return (byte[]) this.storage.get(key);
 	}
 
 	@Override
 	public boolean delete(KeyType key) {
-		ObjectInCache obj = this.storage.remove(key);
-		if (obj != null) {
-			this.currentSize -= obj.size();
+		byte[] data = (byte[]) this.storage.remove(key);
+		if (data != null) {
+			this.currentSize -= data.length;
 			return true;
 		}
 		return false;

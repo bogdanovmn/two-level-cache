@@ -1,10 +1,14 @@
 package com.github.bogdanovmn.tlcache.strategy;
 
-import com.github.bogdanovmn.tlcache.CacheWithMaxSizeLimit;
-import com.github.bogdanovmn.tlcache.ObjectInCache;
-import com.github.bogdanovmn.tlcache.exception.CreateCachedObjectError;
+import com.github.bogdanovmn.tlcache.AbstractCacheWithSizeLimit;
+import com.github.bogdanovmn.tlcache.exception.SerializationError;
+import com.github.bogdanovmn.tlcache.exception.PutToCacheError;
 
 public interface CacheRotateStrategy {
-	void rotateAndPut(CacheWithMaxSizeLimit firstLvl, CacheWithMaxSizeLimit secondLvl, ObjectInCache obj)
-		throws CreateCachedObjectError;
+	void rotateAndPut(
+		AbstractCacheWithSizeLimit firstLvl,
+		AbstractCacheWithSizeLimit secondLvl,
+		Object key,
+		byte[] data
+	) throws SerializationError, PutToCacheError;
 }
