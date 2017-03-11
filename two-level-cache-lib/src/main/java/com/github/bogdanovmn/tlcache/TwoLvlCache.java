@@ -1,6 +1,7 @@
 package com.github.bogdanovmn.tlcache;
 
 import com.github.bogdanovmn.tlcache.exception.PutToCacheError;
+import com.github.bogdanovmn.tlcache.exception.RotateObjectError;
 import com.github.bogdanovmn.tlcache.exception.SerializationError;
 import com.github.bogdanovmn.tlcache.exception.DeserializationError;
 import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
@@ -8,22 +9,21 @@ import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
 import java.io.*;
 
 public class TwoLvlCache<KeyType, ObjType> implements Cache<KeyType, ObjType> {
-	private final AbstractCacheWithSizeLimit firstLvlCache;
-	private final AbstractCacheWithSizeLimit secondLvlCache;
+	private final AbstractCacheWithSizeLimit<KeyType> firstLvlCache;
+	private final AbstractCacheWithSizeLimit<KeyType> secondLvlCache;
 	private final CacheRotateStrategy rotateStrategy;
 
 	public TwoLvlCache(int memoryCacheMaxSize, int fileCacheMaxSize, CacheRotateStrategy strategy)
 		throws IOException
 	{
-		this.firstLvlCache = new MemoryCache<KeyType>(memoryCacheMaxSize);
-//		this.secondLvlCache = new MemoryCache<KeyType>(fileCacheMaxSize);
-		this.secondLvlCache = new FileCache<KeyType>(fileCacheMaxSize, System.getProperty("java.io.tmpdir"));
+		this.firstLvlCache = new MemoryCache<>(memoryCacheMaxSize);
+		this.secondLvlCache = new FileCache<>(fileCacheMaxSize, System.getProperty("java.io.tmpdir"));
 		this.rotateStrategy = strategy;
 	}
 
 	@Override
 	public void put(KeyType key, ObjType obj)
-		throws SerializationError, PutToCacheError
+		throws PutToCacheError, SerializationError
 	{
 		byte[] data = this.toBytes(obj);
 
@@ -33,13 +33,23 @@ public class TwoLvlCache<KeyType, ObjType> implements Cache<KeyType, ObjType> {
 
 	@Override
 	public ObjType get(KeyType key)
-		throws DeserializationError
+		throws DeserializationError, RotateObjectError
 	{
 		ObjType result = null;
 
-		byte[] data = (byte[]) this.firstLvlCache.get(key);
+		byte[] data = this.firstLvlCache.get(key);
 		if (data == null) {
-			data = (byte[]) this.secondLvlCache.get(key);
+			data = this.secondLvlCache.get(key);
+			// move from 2nd level to 1st
+			if (data != null) {
+				try {
+					this.secondLvlCache.delete(key);
+					this.rotateStrategy.rotateAndPut(this.firstLvlCache, this.secondLvlCache, key, data);
+				}
+				catch (PutToCacheError | SerializationError e) {
+					throw new RotateObjectError(e);
+				}
+			}
 		}
 
 		if (data != null) {
@@ -78,7 +88,7 @@ public class TwoLvlCache<KeyType, ObjType> implements Cache<KeyType, ObjType> {
 		return result;
 	}
 
-	public ObjType fromBytes(final byte[] data)
+	private ObjType fromBytes(final byte[] data)
 		throws DeserializationError
 	{
 		ObjType result;

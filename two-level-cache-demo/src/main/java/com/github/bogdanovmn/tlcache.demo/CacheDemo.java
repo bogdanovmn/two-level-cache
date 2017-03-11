@@ -3,17 +3,19 @@ package com.github.bogdanovmn.tlcache.demo;
 
 import com.github.bogdanovmn.tlcache.TwoLvlCache;
 import com.github.bogdanovmn.tlcache.exception.PutToCacheError;
+import com.github.bogdanovmn.tlcache.exception.RotateObjectError;
 import com.github.bogdanovmn.tlcache.exception.SerializationError;
 import com.github.bogdanovmn.tlcache.exception.DeserializationError;
 import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
 import com.github.bogdanovmn.tlcache.strategy.TwoLevelCacheStrategyAlpha;
+import com.github.bogdanovmn.tlcache.strategy.TwoLevelCacheStrategyBeta;
 import org.apache.commons.cli.*;
 
 import java.io.IOException;
 import java.util.Random;
 
 public class CacheDemo {
-	public static void main(String[] args) throws DeserializationError, SerializationError, PutToCacheError, IOException {
+	public static void main(String[] args) throws DeserializationError, SerializationError, PutToCacheError, IOException, RotateObjectError {
 		Options cliOptions = new Options();
 		cliOptions
 			.addOption(
@@ -30,7 +32,6 @@ public class CacheDemo {
 					.hasArg().argName("LIMIT")
 					.desc("max memory (bytes) for second level cache")
 					.required()
-					.type(Integer.class)
 				.build()
 			)
 			.addOption(
@@ -45,7 +46,7 @@ public class CacheDemo {
 				Option.builder("t")
 					.longOpt("task-param")
 					.hasArg().argName("NUMBER")
-					.desc("some integer for abstract task (objects count)")
+					.desc("some integer for abstract task (requests count)")
 					.required()
 					.build()
 			);
@@ -62,9 +63,9 @@ public class CacheDemo {
 			else {
 				CacheRotateStrategy strategy = strategyName.equals("alpha")
 					? new TwoLevelCacheStrategyAlpha()
-					: new TwoLevelCacheStrategyAlpha();
+					: new TwoLevelCacheStrategyBeta();
 
-				TwoLvlCache cache = new TwoLvlCache<Integer, Integer>(
+				TwoLvlCache<Integer, Integer> cache = new TwoLvlCache<>(
 					Integer.valueOf(cmdLine.getOptionValue("first-level-limit")),
 					Integer.valueOf(cmdLine.getOptionValue("second-level-limit")),
 					strategy
@@ -85,26 +86,31 @@ public class CacheDemo {
 		Some complex compute... :)
 	 */
 	private static int complexCompute(int number) {
+		try {
+			Thread.sleep(500);
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		return number;
 	}
 
-	private static void doSomething(int objectsCount, TwoLvlCache cache)
-		throws DeserializationError, SerializationError, PutToCacheError {
-		System.out.println(cache);
-
+	private static void doSomething(int requestsCount, TwoLvlCache cache)
+		throws DeserializationError, SerializationError, PutToCacheError, RotateObjectError
+	{
 		Random generator = new Random();
-		for (int i = 1; i < objectsCount; i++) {
-			int randValue = generator.nextInt(i);
+		for (int i = 1; i < requestsCount; i++) {
+			int randValue = generator.nextInt(10);
 
-			System.out.printf("get %d --> ", randValue);
+			System.out.printf("get '%d' --> ", randValue);
 
 			Integer obj = (Integer) cache.get(randValue);
 			if (obj == null) {
 				cache.put(randValue, complexCompute(randValue));
-				System.out.print(" compute  ");
+				System.out.print(" compute\t");
 			}
 			else {
-				System.out.printf(" hit (%d)  ", obj);
+				System.out.print(" hit\t");
 			}
 
 			System.out.println(cache);

@@ -16,14 +16,12 @@ class FileCache<KeyType> extends AbstractCacheWithSizeLimit<KeyType> {
 		throws IOException
 	{
 		super(maxSize);
-		System.out.println("File cache dir str: " + cacheDir);
 
 		this.baseDir = Files.createTempDirectory(
 			Paths.get(
 				cacheDir
 			), ""
 		);
-		System.out.println("File cache dir: " + this.baseDir.toString());
 	}
 
 	@Override
@@ -104,6 +102,16 @@ class FileCache<KeyType> extends AbstractCacheWithSizeLimit<KeyType> {
 
 	@Override
 	public boolean delete(KeyType key) {
+		File file = this.files.remove(key);
+		if (file != null) {
+			try {
+				Files.delete(file.toPath());
+				this.currentSize -= (int) this.storage.remove(key);
+			} catch (IOException e) {
+				return false;
+			}
+			return true;
+		}
 		return false;
 	}
 }
