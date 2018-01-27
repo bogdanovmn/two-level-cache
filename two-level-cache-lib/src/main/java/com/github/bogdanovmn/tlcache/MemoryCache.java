@@ -1,6 +1,9 @@
 package com.github.bogdanovmn.tlcache;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 class MemoryCache<KeyType> extends AbstractCacheWithSizeLimit<KeyType> {
 

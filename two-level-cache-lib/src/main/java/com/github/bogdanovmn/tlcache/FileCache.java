@@ -1,12 +1,15 @@
 package com.github.bogdanovmn.tlcache;
 
-import com.github.bogdanovmn.tlcache.exception.PutToCacheError;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 class FileCache<KeyType> extends AbstractCacheWithSizeLimit<KeyType> {
 	private final Map<KeyType, File> files = new HashMap<>();
@@ -18,9 +21,8 @@ class FileCache<KeyType> extends AbstractCacheWithSizeLimit<KeyType> {
 		super(maxSize);
 
 		this.baseDir = Files.createTempDirectory(
-			Paths.get(
-				cacheDir
-			), ""
+			Paths.get(cacheDir),
+			""
 		);
 	}
 
@@ -107,7 +109,8 @@ class FileCache<KeyType> extends AbstractCacheWithSizeLimit<KeyType> {
 			try {
 				Files.delete(file.toPath());
 				this.currentSize -= (int) this.storage.remove(key);
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				return false;
 			}
 			return true;

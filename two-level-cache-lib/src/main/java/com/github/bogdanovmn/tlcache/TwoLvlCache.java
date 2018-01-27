@@ -1,19 +1,13 @@
 package com.github.bogdanovmn.tlcache;
 
-import com.github.bogdanovmn.tlcache.exception.PutToCacheError;
-import com.github.bogdanovmn.tlcache.exception.RotateObjectError;
-import com.github.bogdanovmn.tlcache.exception.SerializationError;
-import com.github.bogdanovmn.tlcache.exception.DeserializationError;
-import com.github.bogdanovmn.tlcache.strategy.CacheRotateStrategy;
-
 import java.io.*;
 
 public class TwoLvlCache<KeyType, ObjType> implements Cache<KeyType, ObjType> {
 	private final AbstractCacheWithSizeLimit<KeyType> firstLvlCache;
 	private final AbstractCacheWithSizeLimit<KeyType> secondLvlCache;
-	private final CacheRotateStrategy rotateStrategy;
+	private final TwoLvlCacheRotateStrategy rotateStrategy;
 
-	public TwoLvlCache(int memoryCacheMaxSize, int fileCacheMaxSize, CacheRotateStrategy strategy)
+	public TwoLvlCache(int memoryCacheMaxSize, int fileCacheMaxSize, TwoLvlCacheRotateStrategy strategy)
 		throws IOException
 	{
 		this.firstLvlCache = new MemoryCache<>(memoryCacheMaxSize);
